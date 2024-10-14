@@ -1,105 +1,194 @@
 bl_info = {
-	"name": "Bones Renamer",
-	"author": "Hogarth-MMD,空想幻灵",
-	"version": (1, 1),
-	"blender": (2, 83, 0),
-	"location": "View3D > Tool Shelf > Bones Renamer",
-	"description": "bones renamer for armature conversion",
-	"warning": "",
-	"wiki_url": "https://github.com/uitcis/bones_renamer",
-	"category": "Object",
-	}
+    "name": "Bones Renamer",
+    "author": "Hogarth-MMD,空想幻灵",
+    "version": (2022, 7, 18),
+    "blender": (2, 83, 0),
+    "location": "View 3D > Tool Shelf > Tool",
+    "description": "bones renamer for armature conversion",
+    "warning": "",
+    "wiki_url": "https://gitee.com/uitcis/bones_renamer",
+    "category": "Armature",
+}
+
 import bpy
-from bpy.types import Operator, Panel, PropertyGroup
+from bpy.types import Operator, Panel
+import csv
+import os
 
-from . import boneMaps_renamer
-from .boneMaps_renamer import *
-from . import import_csv
-#import imp
-#imp.reload(boneMaps_renamer)
+# 读取CSV文件中的骨骼名称字典
+def use_csv_bones_dictionary():
+    bones_dictionary = os.path.join(os.path.dirname(__file__), "bones_dictionary.csv")
+    with open(bones_dictionary, newline='', encoding='utf-8') as csvfile:
+        CSVreader = csv.reader(csvfile, delimiter=',', skipinitialspace=True)
+        BONES_DICTIONARY = [tuple(x) for x in CSVreader if x]
+    return BONES_DICTIONARY
 
-# Panel
+def use_csv_bones_fingers_dictionary():
+    finger_bones_dictionary = os.path.join(os.path.dirname(__file__), "bones_fingers_dictionary.csv")
+    with open(finger_bones_dictionary, newline='', encoding='utf-8') as csvfile:
+        CSVreader = csv.reader(csvfile, delimiter=',', skipinitialspace=True)
+        FINGER_BONES_DICTIONARY = [tuple(x) for x in CSVreader if x]
+    return FINGER_BONES_DICTIONARY
 
+# 重命名骨骼的函数
+def rename_bones(boneMap1, boneMap2, BONE_NAMES_DICTIONARY):
+    if not BONE_NAMES_DICTIONARY:
+        print("No bone names found in the dictionary.")
+        return
+
+    boneMaps = BONE_NAMES_DICTIONARY[0]
+    boneMap1_index = boneMaps.index(boneMap1) if boneMap1 in boneMaps else -1
+    boneMap2_index = boneMaps.index(boneMap2) if boneMap2 in boneMaps else -1
+
+    if boneMap1_index == -1 or boneMap2_index == -1:
+        print("Invalid Origin or Destination Armature Type.")
+        return
+
+    bpy.ops.object.mode_set(mode='OBJECT')
+    for k in BONE_NAMES_DICTIONARY:
+        if k[boneMap1_index] in bpy.context.active_object.data.bones.keys():
+            if k[boneMap2_index] != '':
+                bpy.context.active_object.data.bones[k[boneMap1_index]].name = k[boneMap2_index]
+
+def rename_finger_bones(boneMap1, boneMap2, FINGER_BONE_NAMES_DICTIONARY):
+    if not FINGER_BONE_NAMES_DICTIONARY:
+        print("No finger bone names found in the dictionary.")
+        return
+
+    boneMaps = FINGER_BONE_NAMES_DICTIONARY[0]
+    boneMap1_index = boneMaps.index(boneMap1) if boneMap1 in boneMaps else -1
+    boneMap2_index = boneMaps.index(boneMap2) if boneMap2 in boneMaps else -1
+
+    if boneMap1_index == -1 or boneMap2_index == -1:
+        print("Invalid Origin or Destination Armature Type for fingers.")
+        return
+
+    bpy.ops.object.mode_set(mode='OBJECT')
+    for k in FINGER_BONE_NAMES_DICTIONARY:
+        if k[boneMap1_index] in bpy.context.active_object.data.bones.keys():
+            if k[boneMap2_index] != '':
+                bpy.context.active_object.data.bones[k[boneMap1_index]].name = k[boneMap2_index]
+
+# 操作符：批量重命名骨骼
+class BonesRenamerLeftToRight(Operator):
+    """Rename bones from left to right"""
+    bl_idname = "object.bones_renamer_left_to_right"
+    bl_label = "Rename Left to Right"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.type == 'ARMATURE'
+
+    def execute(self, context):
+        BONE_NAMES_DICTIONARY = use_csv_bones_dictionary()
+        FINGER_BONE_NAMES_DICTIONARY = use_csv_bones_fingers_dictionary()
+
+        origin_type = context.scene.Origin_Armature_Type
+        destination_type = context.scene.Destination_Armature_Type
+
+        rename_bones(origin_type, destination_type, BONE_NAMES_DICTIONARY)
+        rename_finger_bones(origin_type, destination_type, FINGER_BONE_NAMES_DICTIONARY)
+
+        bpy.ops.object.mode_set(mode='POSE')
+        bpy.ops.pose.select_all(action='SELECT')
+        return {'FINISHED'}
+
+class BonesRenamerRightToLeft(Operator):
+    """Rename bones from right to left"""
+    bl_idname = "object.bones_renamer_right_to_left"
+    bl_label = "Rename Right to Left"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.type == 'ARMATURE'
+
+    def execute(self, context):
+        BONE_NAMES_DICTIONARY = use_csv_bones_dictionary()
+        FINGER_BONE_NAMES_DICTIONARY = use_csv_bones_fingers_dictionary()
+
+        origin_type = context.scene.Destination_Armature_Type
+        destination_type = context.scene.Origin_Armature_Type
+
+        rename_bones(origin_type, destination_type, BONE_NAMES_DICTIONARY)
+        rename_finger_bones(origin_type, destination_type, FINGER_BONE_NAMES_DICTIONARY)
+
+        bpy.ops.object.mode_set(mode='POSE')
+        bpy.ops.pose.select_all(action='SELECT')
+        return {'FINISHED'}
+
+# 面板类
 class Bones_PT_Renamer(Panel):
-	"""Creates the Bones Renamer Panel in a VIEW_3D TOOLS tab"""
-	bl_space_type = "VIEW_3D"
-	bl_region_type = "TOOLS"
-	bl_label = "Bones Renamer Panel"
-	#bl_category = "Bones Renamer"
-	bl_idname = "OBJECT_PT_bones_renamer"
+    """Creates the Bones Renamer Panel in a VIEW_3D TOOLS tab"""
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_label = "Bones Renamer Panel"
+    bl_category = "Tool"
+    bl_idname = "OBJECT_PT_bones_renamer"
 
-	def draw(self, context):
-		layout = self.layout
-		row = layout.row()
-		row.label(text="Mass Rename Bones", icon="ARMATURE_DATA")
-		row = layout.row()
-		row = layout.row()
-		layout.prop(context.scene, "Origin_Armature_Type")
-		row = layout.row()
-		layout.prop(context.scene, "Destination_Armature_Type")
-		row = layout.row()
-		row.operator("object.bones_renamer", text = "Mass Rename Bones")
-		row = layout.row()
+    def draw(self, context):
+        layout = self.layout
+        split = layout.split(factor=0.5)
 
-'''def main(context):
-	#use_international_fonts_display_names_bones()
-	#unhide_all_armatures()
-'''
-#define
-def main(context):
+        col = split.column()
+        col.label(text="From:")
+        col.prop(context.scene, "Origin_Armature_Type")
+        col.operator("object.bones_renamer_left_to_right", text="Rename Left to Right")
 
-	BONE_NAMES_DICTIONARY = import_csv.use_csv_bones_dictionary()
-	FINGER_BONE_NAMES_DICTIONARY = import_csv.use_csv_bones_fingers_dictionary()
-	rename_bones(bpy.context.scene.Origin_Armature_Type, bpy.context.scene.Destination_Armature_Type, BONE_NAMES_DICTIONARY)
-	rename_finger_bones(bpy.context.scene.Origin_Armature_Type, bpy.context.scene.Destination_Armature_Type, FINGER_BONE_NAMES_DICTIONARY)
-	bpy.ops.object.mode_set(mode='POSE')
-	bpy.ops.pose.select_all(action='SELECT')
+        col = split.column()
+        col.label(text="To:")
+        col.prop(context.scene, "Destination_Armature_Type")
+        col.operator("object.bones_renamer_right_to_left", text="Rename Right to Left")
 
-	
-#done
-class BonesRenamer(bpy.types.Operator):
-	"""Mass bones renamer for armature conversion"""
-	bl_idname = "object.bones_renamer"
-	bl_label = "Bones Renamer"
+# 从CSV文件中动态生成EnumProperty的选项
+def generate_enum_items(bone_names):
+    if not bone_names:
+        print("Warning: No bone names found in CSV file.")
+        return [('', '', '')]
+    return [(bone_name, bone_name, '') for bone_name in bone_names]
 
-	bpy.types.Scene.Origin_Armature_Type = bpy.props.EnumProperty(items = [('mmd_english', 'MMD English bone names', 'MikuMikuDance English bone names'), ('mmd_japanese', 'MMD Japanese bone names', 'MikuMikuDamce Japanese bone names'), ('mmd_japaneseLR', 'MMD Japanese bones names .L.R suffixes', 'MikuMikuDamce Japanese bones names with .L.R suffixes'), ('xna_lara', 'XNALara bone names', 'XNALara bone names'), ('daz_poser', 'DAZ/Poser bone names', 'DAZ/Poser/Second Life bone names'), ('blender_rigify', 'Blender rigify bone names', 'Blender rigify bone names before generating the complete rig'), ('sims_2', 'Sims 2 bone names', 'Sims 2 bone names'), ('motion_builder', 'Motion Builder bone names', 'Motion Builder bone names'), ('3ds_max', '3ds Max bone names', '3ds Max bone names'), ('bepu', 'Bepu full body IK bone names', 'Bepu full body IK bone names'), ('project_mirai', 'Project Mirai bone names', 'Project Mirai bone names'), ('manuel_bastioni_lab', 'Manuel Bastioni Lab bone names', 'Manuel Bastioni Lab bone names'), ('makehuman_mhx', 'Makehuman MHX bone names', 'Makehuman MHX bone names'), ('sims_3', 'Sims 3 bone names', 'Sims 3 bone names'), ('doa5lr', 'DOA5LR bone names', 'Dead on Arrival 5 Last Round bone names'), ('Bip_001', 'Bip001 bone names', 'Bip001 bone names'), ('biped_3ds_max', 'Biped 3DS Max bone names', 'Biped 3DS Max bone names'), ('biped_sfm', 'Biped Source Film Maker bone names', 'Biped Source Film Maker bone names'), ('valvebiped', 'ValveBiped bone names', 'ValveBiped bone names'), ('iClone7', 'iClone7 bone names', 'iClone7 bone names')], name = "Rename  bones  from :", default = 'mmd_japanese')
-
-
-	bpy.types.Scene.Destination_Armature_Type = bpy.props.EnumProperty(items = [('mmd_english', 'MMD English bone names', 'MikuMikuDance English bone names'), ('mmd_japanese', 'MMD Japanese bone names', 'MikuMikuDamce Japanese bone names'), ('mmd_japaneseLR', 'MMD Japanese bones names .L.R suffixes', 'MikuMikuDamce Japanese bones names with .L.R suffixes'), ('xna_lara', 'XNALara bone names', 'XNALara bone names'), ('daz_poser', 'DAZ/Poser bone names', 'DAZ/Poser/Second Life bone names'), ('blender_rigify', 'Blender rigify bone names', 'Blender rigify bone names before generating the complete rig'), ('sims_2', 'Sims 2 bone names', 'Sims 2 bone names'), ('motion_builder', 'Motion Builder bone names', 'Motion Builder bone names'), ('3ds_max', '3ds Max bone names', '3ds Max bone names'), ('bepu', 'Bepu full body IK bone names', 'Bepu full body IK bone names'), ('project_mirai', 'Project Mirai bone names', 'Project Mirai bone names'), ('manuel_bastioni_lab', 'Manuel Bastioni Lab bone names', 'Manuel Bastioni Lab bone names'), ('makehuman_mhx', 'Makehuman MHX bone names', 'Makehuman MHX bone names'), ('sims_3', 'Sims 3 bone names', 'Sims 3 bone names'), ('doa5lr', 'DOA5LR bone names', 'Dead on Arrival 5 Last Round bone names'), ('Bip_001', "Bip001 bone names", 'Bip001 bone names'), ('biped_3ds_max', 'Biped 3DS Max bone names', 'Biped 3DS Max bone names'), ('biped_sfm', 'Biped Source Film Maker bone names', 'Biped Source Film Maker bone names'), ('valvebiped', 'ValveBiped bone names', 'ValveBiped bone names'), ('iClone7', 'iClone7 bone names', 'iClone7 bone names')], name = "Rename  bones  to :", default = 'mmd_english')
-
-	#@classmethod
-	#def poll(cls, context):
-		#return context.active_object.type == 'ARMATURE'
-		#return context.active_object is not None
-
-	def execute(self, context):
-		main(context)
-		return {'FINISHED'}
-
-
-#####################
-
-    
+# 注册和注销
 classes = (
-   Bones_PT_Renamer,
-   BonesRenamer,
+    Bones_PT_Renamer,
+    BonesRenamerLeftToRight,
+    BonesRenamerRightToLeft,
 )
 
-register, unregister = bpy.utils.register_classes_factory(classes)
-
-# Register
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    
 
+    # 从CSV文件中读取骨骼名称
+    BONES_DICTIONARY = use_csv_bones_dictionary()
+    if BONES_DICTIONARY:
+        bone_names = BONES_DICTIONARY[0][1:]  # 假设第一行是预设类型
+    else:
+        bone_names = []
 
-# Unregister
+    # 生成EnumProperty的选项
+    enum_items = generate_enum_items(bone_names)
+
+    # 设置默认值
+    default_value = bone_names[0] if bone_names else ''
+
+    # 动态设置EnumProperty
+    bpy.types.Scene.Origin_Armature_Type = bpy.props.EnumProperty(
+        items=enum_items,
+        name="Rename bones from :",
+        default=default_value
+    )
+
+    bpy.types.Scene.Destination_Armature_Type = bpy.props.EnumProperty(
+        items=enum_items,
+        name="Rename bones to :",
+        default=default_value
+    )
+
 def unregister():
-    for cls in classes:
+    for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-   
 
+    del bpy.types.Scene.Origin_Armature_Type
+    del bpy.types.Scene.Destination_Armature_Type
 
 if __name__ == "__main__":
-	register()
+    register()
