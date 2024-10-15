@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Bones Renamer",
     "author": "Hogarth-MMD,空想幻灵",
-    "version": (2022, 7, 18),
+    "version": (2024,10,14),
     "blender": (2, 83, 0),
     "location": "View 3D > Tool Shelf > Tool",
     "description": "bones renamer for armature conversion",
