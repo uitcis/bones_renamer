@@ -146,6 +146,14 @@ class BONES_OT_DetectMatchingSkeleton(Operator):
         if BONE_NAMES_DICTIONARY:
             result = detect_matching_skeleton(context, BONE_NAMES_DICTIONARY)
             self.report({'INFO'}, result)
+            
+            # 提取匹配的预设名称
+            preset_names, _ = BONE_NAMES_DICTIONARY
+            for idx, name in enumerate(preset_names):
+                if name in result:
+                    # 更新左侧预设
+                    context.scene.Origin_Armature_Type = name
+                    break
         else:
             self.report({'ERROR'}, "Failed to read any preset names from CSV file.")
         return {'FINISHED'}
