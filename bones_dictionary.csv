@@ -1,4 +1,5 @@
-﻿blender_rigify,root,spine.006,spine.005,spine.003,spine.002,spine.001,spine,center,shoulder.L,upper_arm.L,forearm.L,hand.L,shoulder.R,upper_arm.R,forearm.R,hand.R,thigh.L,shin.L,foot.L,thigh.R,shin.R,foot.R,toe.L,toe.R,eye.L,eye.R
+﻿中文,总父级,头,颈,上半身2,上半身,下半身,父级,中心,肩.L,上臂.L,小臂.L,手腕.L,肩.R,上臂.R,小臂.R,手腕.R,脚.L,膝.L,踝.L,脚.R,膝.R,踝.R,脚趾.L,脚趾.R,眼.L,眼.R
+base_rigify,root,spine.006,spine.005,spine.003,spine.002,spine.001,spine,center,shoulder.L,upper_arm.L,forearm.L,hand.L,shoulder.R,upper_arm.R,forearm.R,hand.R,thigh.L,shin.L,foot.L,thigh.R,shin.R,foot.R,toe.L,toe.R,eye.L,eye.R
 mmd_japanese,全ての親,頭,首,上半身2,上半身,下半身,センター,センター,左肩,左腕,左ひじ,左手首,右肩,右腕,右ひじ,右手首,左足,左ひざ,左足首,右足,右ひざ,右足首,左つま先,右つま先,左目,右目
 mmd_japaneseLR,全ての親,頭,首,上半身2,上半身,下半身,センター,センター,肩.L,腕.L,ひじ.L,手首.L,肩.R,腕.R,ひじ.R,手首.R,足.L,ひざ.L,足首.L,足.R,ひざ.R,足首.R,つま先.L,つま先.R,目.L,目.R
 mmd_english,root,head,neck,upper body 2,upper body,lower body,,center,shoulder_L,arm_L,elbow_L,wrist_L,shoulder_R,arm_R,elbow_R,wrist_R,leg_L,knee_L,ankle_L,leg_R,knee_R,ankle_R,toe_L,toe_R,eye_L,eye_R

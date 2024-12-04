@@ -1,11 +1,11 @@
 bl_info = {
     "name": "Bones Renamer",
     "author": "Hogarth-MMD,空想幻灵",
-    "version": (2024, 10, 14),
+    "version": (1, 0, 0),
     "blender": (2, 83, 0),
     "location": "View 3D > Tool Shelf > Tool",
     "description": "bones renamer for armature conversion",
-    "warning": "",
+    "warning": "2024/12/1版",
     "wiki_url": "https://gitee.com/uitcis/bones_renamer",
     "category": "Armature",
 }
